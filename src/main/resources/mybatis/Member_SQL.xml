@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="member">
+
+	<select id="selectConfirmId" parameterType="hashmap"
+		resultType="int">
+
+	<![CDATA[
+		SELECT COUNT(MEM_ID)
+			FROM MEMBER
+		WHERE MEM_ID = LOWER(#{MEM_ID})
+	]]>
+
+	</select>
+
+
+	<select id="selectConfirmEmail" parameterType="hashmap"
+		resultType="int">
+	
+	<![CDATA[
+		
+		SELECT COUNT(EMAIL) 
+			FROM MEMBER 
+		WHERE EMAIL =  LOWER(#{EMAIL})
+	]]>
+
+	</select>
+
+
+	<insert id="insertMember" parameterType="hashmap">
+	INSERT INTO MEMBER (
+					MEM_IDX, 
+					MEM_ID, 
+					MEM_PW, 
+					MEM_NAME,
+					<if test="PHONE != null and !PHONE.equals('')">
+						PHONE,
+					</if>
+					<if test="ZIPCODE != null and !ZIPCODE.equals('')">
+						ZIPCODE,
+					</if>
+					<if test="ADDRESS != null and !ADDRESS.equals('')">
+						ADDRESS,
+					</if>
+					EMAIL, 
+					EMAIL_AGREE
+					<if test="OAUTH != null">
+					,OAUTH
+					</if>
+					) 
+			VALUES 
+				(
+				
+				MEMBER_SEQ.NEXTVAL,
+				LOWER(#{MEM_ID}), 
+				#{MEM_PW},
+				#{MEM_NAME},
+				<if test="PHONE != null and !PHONE.equals('')">
+						#{PHONE},
+				</if>
+				<if test="ZIPCODE != null and !ZIPCODE.equals('')">
+					#{ZIPCODE},
+				</if>
+				<if test="ADDRESS != null and !ADDRESS.equals('')">
+					#{ADDRESS},
+				</if>
+				LOWER(#{EMAIL}),
+				#{EMAIL_AGREE}
+				<if test="OAUTH != null">
+					,#{OAUTH}
+				</if>
+				)
+	</insert>
+
+
+	<select id="selectMemberDetail" parameterType="hashmap"
+		resultType="hashmap">
+	
+		<![CDATA[
+			
+			SELECT 
+				MEM_ID,
+				MEM_PW, 
+				MEM_NAME, 
+				PHONE, 
+				ZIPCODE, 
+				ADDRESS,
+				EMAIL,
+				EMAIL_AGREE,
+				ADMIN,
+				OAUTH
+			FROM MEMBER WHERE MEM_ID = LOWER(#{MEM_ID}) AND DEL = 'N'
+		
+		]]>
+
+	</select>
+
+
+	<select id="checkID" parameterType="hashmap" resultType="int">
+   
+	   <![CDATA[
+	      SELECT COUNT(*) 
+	         FROM MEMBER 
+	      WHERE 
+	         MEM_NAME= #{MEM_NAME}
+	      AND 
+	         PHONE = #{PHONE}
+	   ]]>
+
+	</select>
+	
+	<select id="findID" parameterType="hashmap" resultType="String">
+   
+	   <![CDATA[
+	      SELECT MEM_ID
+	         FROM MEMBER 
+	      WHERE 
+	         MEM_NAME= #{MEM_NAME}
+	      AND 
+	         PHONE = #{PHONE}
+	   ]]>
+
+	</select>
+
+	<select id="checkPW" parameterType="hashmap" resultType="int">
+   
+	   <![CDATA[
+	      SELECT COUNT(*) 
+	         FROM MEMBER 
+	      WHERE 
+	         MEM_ID= LOWER(#{MEM_ID})
+	      AND 
+	         EMAIL = LOWER(#{EMAIL})
+	   ]]>
+
+	</select>
+
+	<update id="updateTempPW" parameterType="hashmap">
+	      <![CDATA[
+	      UPDATE 
+	         MEMBER
+	      SET 
+	         MEM_PW = #{TEMP_PW}
+	      WHERE 
+	         MEM_ID = LOWER(#{MEM_ID})
+	   ]]>
+	</update>
+
+
+</mapper>

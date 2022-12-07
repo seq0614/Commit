@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="product">
+
+   <select id="selectProList" parameterType="hashmap"
+      resultType="hashmap">
+      
+       SELECT A.*, ROWNUM RNUM FROM
+      	(SELECT
+      		PRO_IDX,
+     		PRO_GROUP,
+     		NAME,
+      		CATEGORY,
+      		TO_CHAR(REG_DATE, 'YYYY-MM-DD') AS REG_DATE,
+      		ORDER_CNT,
+     		STOCK,
+      		PRICE,
+     		MAIN_IMG,
+      		ORIGINAL_NAME
+      	FROM PRODUCT WHERE DEL = 'N'
+      <if test='PRO_GROUP != NULL'>
+         AND PRO_GROUP = #{PRO_GROUP}
+      </if>
+      
+      <if test='CATEGORY != NULL'>
+         AND CATEGORY = #{CATEGORY}
+      </if>
+
+      <if test="TYPE != null and KEYWORD != null and !TYPE.equals('') and !KEYWORD.equals('')">
+
+         AND UPPER(${TYPE}) LIKE UPPER('%'||TRIM(#{KEYWORD})||'%')
+
+      </if>
+      
+       <if test="SORT == null">
+		ORDER BY PRO_IDX DESC
+         </if> 
+         
+          <if test="SORT != null">
+
+         <if test="!SORT.equals('LOW_PRICE')">
+
+            ORDER BY ${SORT} DESC
+
+         </if>
+
+         <if test="SORT.equals('LOW_PRICE')">
+
+            ORDER BY PRICE ASC
+
+         </if>
+
+      </if>
+         
+      )A
+     
+   </select>
+
+   
+   <select id="selectProDetail" parameterType="hashmap" resultType="hashmap">
+	    SELECT  
+			PRO_IDX,
+			PRO_GROUP,
+			NAME,
+			CATEGORY,
+			TO_CHAR(REG_DATE, 'YYYY-MM-DD') AS REG_DATE,
+			ORDER_CNT,
+			STOCK,
+			PRICE,
+			DEL,
+			MAIN_IMG,
+			ORIGINAL_NAME 
+  		FROM  
+        	PRODUCT 
+    	WHERE 
+	        PRO_IDX = #{PRO_IDX} 
+		AND  
+			DEL = 'N'
+	</select>
+	
+	
+	
+	<select id="seleteProImage" parameterType="hashmap" resultType="hashmap">
+	    SELECT 
+	    	IMG_IDX,
+			PRO_IDX,
+			ORIGINAL_NAME,
+			STORED_NAME,
+			STEP,
+			DEL
+	    FROM 
+	    	IMAGE
+	    WHERE 
+	    	PRO_IDX = #{PRO_IDX} 
+	    AND  
+			DEL = 'N'
+	    ORDER 
+	    	BY STEP
+	    </select>
+	    
+	    
+	 <select id="selectProReview" parameterType="hashmap" resultType="hashmap">
+	  
+ 		  SELECT 
+          REVIEW_IDX,
+          MEM_ID,
+          TITLE,
+          CONTENT,
+          TO_CHAR(REG_DATE, 'YY/MM/DD') AS REG_DATE
+      FROM 
+          REVIEW  
+      WHERE 
+          PRO_IDX = #{PRO_IDX}
+      AND 
+          DEL = 'N'
+      ORDER BY 
+          REVIEW_IDX DESC
+
+	  </select>
+	   	
+	   	
+	   	
+	<select id="selectProQna" parameterType="hashmap" resultType="hashmap">
+	<!--    <include refid="etc.pagingPre" /> -->
+			SELECT
+			    QNA_IDX,
+			    PRO_IDX,
+			    REF,
+			    RE_STEP,
+			    QNA_TYPE,
+			    TITLE,
+			    CONTENT,
+			    TO_CHAR(REG_DATE, 'YY/MM/DD') AS REG_DATE,
+			    STATE,
+			    MEM_ID,
+			    DEL
+			FROM QNA WHERE PRO_IDX = #{PRO_IDX} 
+				AND DEL = 'N' ORDER BY REF DESC, RE_STEP ASC
+<!--    <include refid="etc.pagingPost" /> -->
+	</select>
+   
+   
+   <insert id="insertProOrder" parameterType="hashmap">
+   
+   	INSERT INTO PRO_ORDER 
+   		VALUES(
+   				#{ORDER_IDX},
+   				#{PRO_IDX},
+   				#{AMOUNT}
+   			  )
+   
+   </insert>
+   
+   
+   
+    <insert id="insertOrderInfo" parameterType="hashmap"
+       useGeneratedKeys="true" keyProperty="ORDER_IDX">
+   <selectKey keyProperty="ORDER_IDX" resultType="string"
+			order="BEFORE">
+			
+					SELECT ORDER_SEQ.NEXTVAL FROM DUAL
+					
+				</selectKey>
+		   
+		   INSERT INTO ORDER_INFO 
+		    	(
+		    	ORDER_IDX,
+		    	MEM_ID,
+		    	NAME,
+		    	ADDRESS,
+		    	PHONE,
+		    	<if test="REQUEST != null">
+		    	REQUEST,
+		    	</if>
+		    	<if test="CP_IDX != null">
+		    	CP_IDX,
+		    	</if>
+		    	TOTAL_PRICE,
+		    	PAY_TYPE
+		   		)
+		   		VALUES
+		   		(
+		   		#{ORDER_IDX},
+		   		#{MEM_ID},
+		   		#{NAME},
+		   		#{ADDRESS},
+		   		#{PHONE},
+		   		<if test="REQUEST != null">
+		    	#{REQUEST},
+		    	</if>
+		    	<if test="CP_IDX != null">
+		    	#{CP_IDX},
+		    	</if>
+		    	#{TOTAL_PRICE},
+		    	#{PAY_TYPE}
+		   		
+		   		)
+		   		
+		   
+		   </insert>
+		   
+		   
+		   
+		   <update id="updateProStock" parameterType="hashmap">
+		   
+		   UPDATE PRODUCT SET 
+		   
+		   <if test="cancel == null">
+				STOCK = STOCK - #{AMOUNT}, 
+		   		 ORDER_CNT = ORDER_CNT + 1
+		   </if>
+		   
+		   <if test="cancel != null">
+				STOCK = STOCK + #{AMOUNT}, 
+		   		 ORDER_CNT = ORDER_CNT - 1
+		   </if>  
+		   
+		   WHERE PRO_IDX = #{PRO_IDX}
+   
+   </update>
+   
+   
+   
+   <update id="updateMemberCoupon" parameterType="hashmap">
+
+   
+	   UPDATE MEMBER_CP
+	   		SET DEL = 
+	   		<if test="cancel == null">	   		
+	   			'Y' 
+	   		</if>
+	   		<if test="cancel != null">	   		
+	   			'N' 
+	   		</if>
+	   WHERE CP_IDX = #{CP_IDX} AND MEM_ID = #{MEM_ID}
+   
+
+   </update>
+   
+   <update id="cancelOrder" parameterType="hashmap">
+   
+	   UPDATE ORDER_INFO 
+	   		SET STATE = 'A'
+	   WHERE ORDER_IDX = #{ORDER_IDX} AND MEM_ID = #{MEM_ID}
+   
+   </update>
+   
+   
+   
+   	<select id="selectOrderState" parameterType="hashmap" resultType="hashmap">
+
+			SELECT
+	            MEM_ID,
+	            STATE
+	        FROM ORDER_INFO
+	        WHERE ORDER_IDX = #{ORDER_IDX}
+
+	</select>
+	
+</mapper>
